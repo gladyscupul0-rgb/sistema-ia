@@ -1,17 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '$env/dynamic/public';
 
-// import.meta.env las inyecta Vite en el build (igual que en config.js).
-// En Vercel estas variables se definen en el proyecto y llegan al build.
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+// SvelteKit lee PUBLIC_* del entorno del proceso en runtime ($env/dynamic/public).
+// Esto funciona tanto en Vercel (variables del dashboard) como en local (apps/web/.env).
+const supabaseUrl = env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey.startsWith('PEGA_AQUI')) {
-  console.error('Faltan PUBLIC_SUPABASE_URL o PUBLIC_SUPABASE_ANON_KEY en apps/web/.env');
+export const supabaseConfigured = Boolean(
+  supabaseUrl && supabaseAnonKey && !supabaseAnonKey.startsWith('PEGA_AQUI')
+);
+
+if (!supabaseConfigured) {
+  console.error('Faltan PUBLIC_SUPABASE_URL o PUBLIC_SUPABASE_ANON_KEY en el entorno del frontend');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    flowType: 'pkce',
-    detectSessionInUrl: true
+export const supabase = createClient(
+  supabaseUrl ?? 'https://placeholder.supabase.co',
+  supabaseAnonKey ?? 'placeholder-anon-key',
+  {
+    auth: {
+      flowType: 'pkce',
+      detectSessionInUrl: true
+    }
   }
-});
+);

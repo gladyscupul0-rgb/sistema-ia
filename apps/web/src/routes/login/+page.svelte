@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { supabase } from '$lib/supabase';
+  import { supabase, supabaseConfigured } from '$lib/supabase';
   import { loginWithPassword, registerWithPassword, hasSession } from '$lib/auth';
 
   let mode = $state('login'); // 'login' | 'register'
@@ -61,6 +61,7 @@
     </p>
 
     {#if error}<p class="error">{error}</p>{/if}
+    {#if !supabaseConfigured}<p class="error">Google no está disponible: falta configurar Supabase en el servidor.</p>{/if}
 
     <form onsubmit={submit}>
       <label>Email
