@@ -26,8 +26,40 @@
   let cAmount = $state('');
   let cDate = $state(new Date().toISOString().slice(0, 10));
 
+  // Filtros de pedidos
+  let fFilterStatus = $state('');
+  let fFilterClient = $state('');
+  let fFilterFrom = $state('');
+  let fFilterTo = $state('');
+  let fFilterText = $state('');
+
   const money = (n) => `$${Number(n || 0).toFixed(2)}`;
   const statusLabel = { pendiente: 'Pendiente', en_proceso: 'En proceso', entregado: 'Entregado', cancelado: 'Cancelado' };
+
+  // Lista filtrada que combina estado, cliente, rango de fechas y texto.
+  let filteredOrders = $derived(
+    orders.filter((o) => {
+      if (fFilterStatus && o.status !== fFilterStatus) return false;
+      if (fFilterClient && o.client_id !== fFilterClient) return false;
+      if (fFilterFrom && o.order_date < fFilterFrom) return false;
+      if (fFilterTo && o.order_date > fFilterTo) return false;
+      if (fFilterText) {
+        const q = fFilterText.trim().toLowerCase();
+        const desc = (o.description || '').toLowerCase();
+        const client = (o.clients?.name || '').toLowerCase();
+        if (!desc.includes(q) && !client.includes(q)) return false;
+      }
+      return true;
+    })
+  );
+
+  const hasFilters = $derived(
+    Boolean(fFilterStatus || fFilterClient || fFilterFrom || fFilterTo || fFilterText)
+  );
+
+  function clearFilters() {
+    fFilterStatus = ''; fFilterClient = ''; fFilterFrom = ''; fFilterTo = ''; fFilterText = '';
+  }
 
   async function load() {
     error = '';
@@ -167,12 +199,48 @@
       </form>
 
       <div class="card">
-        <h2>Agenda de pedidos</h2>
+        <div class="card-head">
+          <h2>Agenda de pedidos</h2>
+          <span class="muted count">
+            {filteredOrders.length} de {orders.length}
+          </span>
+        </div>
+
+        <div class="filters">
+          <label>Estado
+            <select bind:value={fFilterStatus}>
+              <option value="">Todos</option>
+              {#each Object.entries(statusLabel) as [v, l]}<option value={v}>{l}</option>{/each}
+            </select>
+          </label>
+          <label>Cliente
+            <select bind:value={fFilterClient}>
+              <option value="">Todos</option>
+              {#each clients as c}<option value={c.id}>{c.name}</option>{/each}
+            </select>
+          </label>
+          <label>Desde
+            <input type="date" bind:value={fFilterFrom} />
+          </label>
+          <label>Hasta
+            <input type="date" bind:value={fFilterTo} />
+          </label>
+          <label class="grow">Buscar
+            <input bind:value={fFilterText} placeholder="Descripción o cliente" />
+          </label>
+          {#if hasFilters}
+            <button type="button" class="ghost clear" onclick={clearFilters}>Limpiar</button>
+          {/if}
+        </div>
+
         {#if orders.length === 0}<p class="muted">Sin pedidos todavía.</p>{/if}
+        {#if orders.length > 0 && filteredOrders.length === 0}
+          <p class="muted">Ningún pedido coincide con los filtros.</p>
+        {/if}
         <table>
           <thead><tr><th>Fecha</th><th>Cliente</th><th>Descripción</th><th>Monto</th><th>Estado</th><th></th></tr></thead>
           <tbody>
-            {#each orders as o}
+            {#each filteredOrders as o}
               <tr>
                 <td>{o.order_date}</td>
                 <td>{o.clients?.name || '—'}</td>
@@ -314,6 +382,17 @@
   td { padding: .5rem .3rem; border-bottom: 1px solid #26334a; vertical-align: middle; }
   .muted { color: var(--muted); }
   .error { color: var(--red); background: #3b1d1d; border: 1px solid var(--red); border-radius: 8px; padding: .6rem .8rem; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+  .count { font-size: .82rem; }
+  .filters {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: .6rem; align-items: end; margin: 0 0 1rem;
+  }
+  .filters label { font-size: .78rem; }
+  .filters .grow { grid-column: span 2; min-width: 160px; }
+  .filters input, .filters select { padding: .45rem .55rem; font-size: .85rem; }
+  .clear { grid-column: span 2; align-self: end; padding: .45rem .8rem; font-size: .82rem; }
+  @media (max-width: 600px) { .filters .grow, .clear { grid-column: span 1; } }
   .balance { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
   .balance div { display: flex; justify-content: space-between; font-size: .95rem; }
   .balance .total { border-top: 1px solid var(--border); padding-top: .6rem; font-size: 1.1rem; }
