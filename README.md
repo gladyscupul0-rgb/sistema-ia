@@ -43,21 +43,23 @@ npm run dev:api   # API en http://localhost:4000
 npm run dev:web   # Web en http://localhost:5173
 ```
 
-## Deploy en Vercel (monorepo)
+## Deploy en Vercel (un solo proyecto, Services)
 
-Crea **dos proyectos** en Vercel apuntando al mismo repo:
+Un único proyecto de Vercel con el repo completo (Root Directory = raíz). El
+`vercel.json` de la raíz define dos servicios en el mismo dominio:
 
-| Proyecto | Root Directory | Framework |
+| Servicio | Carpeta     | Ruta pública |
 |---|---|---|
-| api     | `apps/api`     | Other / Express (serverless en `api/`) |
-| web     | `apps/web`     | SvelteKit |
+| api      | `apps/api`  | `/api/*`     |
+| web      | `apps/web`  | `/*`         |
 
-Variables de entorno en Vercel:
+Como comparten dominio, la web llama a `/api/...` en el mismo origen: **no definas
+`PUBLIC_API_URL` ni `CORS_ORIGIN` en Vercel**. Variables de entorno del proyecto:
 
-- **api**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `CORS_ORIGIN` (URL del frontend), `NODE_ENV=production`
-- **web**: `PUBLIC_API_URL` = `https://<tu-api>.vercel.app`
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET` (API)
+- `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` (web)
 
-Luego actualiza `CORS_ORIGIN` del API con la URL real del frontend.
+Prueba local de todo junto: `vercel dev`.
 
 ## Seguridad
 

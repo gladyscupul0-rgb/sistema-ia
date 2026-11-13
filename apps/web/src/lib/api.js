@@ -1,7 +1,6 @@
 import { getAuthToken, clearLocalSession } from '$lib/auth';
 import { supabase } from '$lib/supabase';
-
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000';
+import { API_URL } from '$lib/config';
 
 export async function api(path, options = {}) {
   const token = await getAuthToken();

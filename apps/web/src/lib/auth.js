@@ -1,4 +1,5 @@
 import { supabase } from '$lib/supabase';
+import { API_URL } from '$lib/config';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
@@ -27,7 +28,6 @@ export function clearLocalSession() {
 }
 
 async function authRequest(path, body) {
-  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000';
   const res = await fetch(`${API_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
